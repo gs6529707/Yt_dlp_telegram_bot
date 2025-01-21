@@ -13,12 +13,23 @@ async def download_video(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         await update.message.reply_text("Please send a valid YouTube link.")
         return
 
-    await update.message.reply_text("Downloading the video. Please wait...")
+    message = await update.message.reply_text("Starting the download...")
+
+    # Function to handle progress updates
+    def progress_hook(d):
+        if d['status'] == 'downloading':
+            percentage = d.get('progress_percent', 0)
+            text = f"Downloading: {percentage:.2f}%"
+            # Edit the message with the updated percentage
+            context.bot.loop.create_task(message.edit_text(text))
+        elif d['status'] == 'finished':
+            context.bot.loop.create_task(message.edit_text("Download complete! Sending the video..."))
 
     # Define the download options
     ydl_opts = {
-        'outtmpl': 'downloads/%(title)s.%(ext)s',  # Save videos to the downloads folder
+        'outtmpl': '/tmp/%(title)s.%(ext)s',  # Save videos to a temporary directory
         'format': 'bestvideo+bestaudio/best',     # Best quality
+        'progress_hooks': [progress_hook],        # Hook for progress updates
     }
 
     try:
@@ -34,11 +45,11 @@ async def download_video(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         os.remove(file_path)
 
     except Exception as e:
-        await update.message.reply_text(f"An error occurred: {str(e)}")
+        await message.edit_text(f"An error occurred: {str(e)}")
 
 def main():
-    # Replace 'YOUR_BOT_TOKEN' with the token you got from BotFather
-    TOKEN = "7706041024:AAEblL50100Fiw1aOYq74Tr5wqiUpJYL1yQ"
+    # Get the bot token from environment variables
+    TOKEN = os.getenv("BOT_TOKEN")
 
     # Create the Application
     application = Application.builder().token(TOKEN).build()
@@ -51,8 +62,4 @@ def main():
     application.run_polling()
 
 if __name__ == '__main__':
-    # Ensure the downloads directory exists
-    if not os.path.exists('downloads'):
-        os.makedirs('downloads')
-
     main()
