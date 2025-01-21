@@ -26,18 +26,17 @@ async def download_video(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             context.bot.loop.create_task(message.edit_text("Download complete! Sending the video..."))
 
     # Define the download options
-   ydl_opts = {
-    'outtmpl': '/tmp/%(title)s.%(ext)s',  # Save videos to a temporary directory
-    'format': 'bestvideo+bestaudio/best', # Best quality
-    'merge_output_format': 'mp4',         # Ensure the merged output is in MP4 format
-    'postprocessors': [{
-        'key': 'FFmpegVideoConvertor',
-        'prefer_ffmpeg': True,
-        'format': 'mp4',  # Convert to MP4
-    }],
-    'progress_hooks': [progress_hook],    # Hook for progress updates
-}
-
+    ydl_opts = {
+        'outtmpl': '/tmp/%(title)s.%(ext)s',  # Save videos to a temporary directory
+        'format': 'bestvideo+bestaudio/best', # Best quality
+        'merge_output_format': 'mp4',         # Ensure the merged output is in MP4 format
+        'postprocessors': [{
+            'key': 'FFmpegVideoConvertor',
+            'prefer_ffmpeg': True,
+            'format': 'mp4',  # Convert to MP4
+        }],
+        'progress_hooks': [progress_hook],    # Hook for progress updates
+    }
 
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
