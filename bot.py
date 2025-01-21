@@ -13,23 +13,12 @@ async def download_video(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         await update.message.reply_text("Please send a valid YouTube link.")
         return
 
-    message = await update.message.reply_text("Starting the download...")
-
-    # Function to handle progress updates
-    def progress_hook(d):
-        if d['status'] == 'downloading':
-            percentage = d.get('progress_percent', 0)
-            text = f"Downloading: {percentage:.2f}%"
-            # Edit the message with the updated percentage
-            context.bot.loop.create_task(message.edit_text(text))
-        elif d['status'] == 'finished':
-            context.bot.loop.create_task(message.edit_text("Download complete! Sending the video..."))
+    await update.message.reply_text("Downloading the video. Please wait...")
 
     # Define the download options
     ydl_opts = {
         'outtmpl': 'downloads/%(title)s.%(ext)s',  # Save videos to the downloads folder
         'format': 'bestvideo+bestaudio/best',     # Best quality
-        'progress_hooks': [progress_hook],        # Hook for progress updates
     }
 
     try:
@@ -45,7 +34,7 @@ async def download_video(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         os.remove(file_path)
 
     except Exception as e:
-        await message.edit_text(f"An error occurred: {str(e)}")
+        await update.message.reply_text(f"An error occurred: {str(e)}")
 
 def main():
     # Replace 'YOUR_BOT_TOKEN' with the token you got from BotFather
