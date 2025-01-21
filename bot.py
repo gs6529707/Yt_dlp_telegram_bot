@@ -32,7 +32,6 @@ async def download_video(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         'merge_output_format': 'mp4',         # Ensure the merged output is in MP4 format
         'postprocessors': [{
             'key': 'FFmpegVideoConvertor',
-            'prefer_ffmpeg': True,
             'format': 'mp4',  # Convert to MP4
         }],
         'progress_hooks': [progress_hook],    # Hook for progress updates
