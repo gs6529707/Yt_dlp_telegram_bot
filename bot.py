@@ -1,4 +1,5 @@
 import os
+import asyncio
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, ContextTypes, filters
 import yt_dlp
@@ -16,13 +17,19 @@ async def download_audio(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     message = await update.message.reply_text("Starting the download...")
 
     # Function to handle progress updates
+    async def update_progress(text):
+        try:
+            await message.edit_text(text)
+        except Exception:
+            pass  # Ignore if the message cannot be edited
+
     def progress_hook(d):
         if d['status'] == 'downloading':
             percentage = d.get('progress_percent', 0)
             text = f"Downloading: {percentage:.2f}%"
-            context.bot.loop.create_task(message.edit_text(text))
+            asyncio.run_coroutine_threadsafe(update_progress(text), asyncio.get_event_loop())
         elif d['status'] == 'finished':
-            context.bot.loop.create_task(message.edit_text("Download complete! Sending the audio..."))
+            asyncio.run_coroutine_threadsafe(update_progress("Download complete! Sending the audio..."), asyncio.get_event_loop())
 
     # Define the download options for audio-only
     ydl_opts = {
