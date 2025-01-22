@@ -4,9 +4,9 @@ from telegram.ext import Application, CommandHandler, MessageHandler, ContextTyp
 import yt_dlp
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    await update.message.reply_text("Hi! Send me a YouTube video link, and I'll download it for you.")
+    await update.message.reply_text("Hi! Send me a YouTube video link, and I'll download the audio for you.")
 
-async def download_video(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def download_audio(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     url = update.message.text
 
     if "youtube.com" not in url and "youtu.be" not in url:
@@ -22,15 +22,16 @@ async def download_video(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             text = f"Downloading: {percentage:.2f}%"
             context.bot.loop.create_task(message.edit_text(text))
         elif d['status'] == 'finished':
-            context.bot.loop.create_task(message.edit_text("Download complete! Sending the video..."))
+            context.bot.loop.create_task(message.edit_text("Download complete! Sending the audio..."))
 
-    # Define the download options
+    # Define the download options for audio-only
     ydl_opts = {
-        'outtmpl': '/tmp/%(title)s.%(ext)s',  # Save videos to a temporary directory
-        'format': 'bestvideo+bestaudio/best', # Best quality
-        'merge_output_format': 'mp4',         # Ensure the merged output is in MP4 format
+        'outtmpl': '/tmp/%(title)s.%(ext)s',  # Save audio to a temporary directory
+        'format': 'bestaudio/best',           # Download the best available audio
         'postprocessors': [{
-            'key': 'FFmpegVideoConvertor',    # Use FFmpeg for conversion
+            'key': 'FFmpegExtractAudio',     # Extract audio using FFmpeg
+            'preferredcodec': 'mp3',         # Convert to MP3 format
+            'preferredquality': '192',       # Set audio quality (192kbps)
         }],
         'progress_hooks': [progress_hook],    # Hook for progress updates
         'ffmpeg_location': './ffmpeg',       # Path to the local ffmpeg binary
@@ -39,11 +40,11 @@ async def download_video(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=True)
-            file_path = ydl.prepare_filename(info)
+            file_path = ydl.prepare_filename(info).replace('.webm', '.mp3')  # Ensure correct extension
 
-        # Send the video to the user
-        with open(file_path, 'rb') as video:
-            await update.message.reply_video(video)
+        # Send the audio to the user
+        with open(file_path, 'rb') as audio:
+            await update.message.reply_audio(audio)
 
         # Clean up the downloaded file
         os.remove(file_path)
@@ -60,7 +61,7 @@ def main():
 
     # Register the command and message handlers
     application.add_handler(CommandHandler("start", start))
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, download_video))
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, download_audio))
 
     # Start the Bot
     application.run_polling()
