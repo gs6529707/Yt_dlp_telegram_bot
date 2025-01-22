@@ -20,7 +20,6 @@ async def download_video(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         if d['status'] == 'downloading':
             percentage = d.get('progress_percent', 0)
             text = f"Downloading: {percentage:.2f}%"
-            # Edit the message with the updated percentage
             context.bot.loop.create_task(message.edit_text(text))
         elif d['status'] == 'finished':
             context.bot.loop.create_task(message.edit_text("Download complete! Sending the video..."))
@@ -32,9 +31,9 @@ async def download_video(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         'merge_output_format': 'mp4',         # Ensure the merged output is in MP4 format
         'postprocessors': [{
             'key': 'FFmpegVideoConvertor',    # Use FFmpeg for conversion
-            'format': 'mp4',                  # Convert to MP4 format
         }],
         'progress_hooks': [progress_hook],    # Hook for progress updates
+        'ffmpeg_location': './ffmpeg',       # Path to the local ffmpeg binary
     }
 
     try:
